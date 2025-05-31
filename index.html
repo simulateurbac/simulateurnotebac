@@ -1,243 +1,201 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Simulateur Bac</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background-color: #f4f6f8;
-      margin: 0;
-      padding: 0;
       color: #333;
-    }
-    header {
-      background-color: #1e88e5;
-      color: white;
       padding: 20px;
+    }
+    h1 {
       text-align: center;
-      font-size: 24px;
+      color: #2c3e50;
     }
-    .container {
-      padding: 20px;
-      max-width: 1200px;
-      margin: auto;
-    }
-    .selector {
+    .header {
+      display: flex;
+      justify-content: center;
       margin-bottom: 20px;
     }
     select, input[type="number"] {
       padding: 5px;
-      font-size: 16px;
+      margin: 5px;
     }
     .stats {
       display: flex;
-      justify-content: space-between;
-      background-color: #e3f2fd;
-      padding: 15px;
-      margin-bottom: 20px;
+      justify-content: space-around;
+      margin: 20px 0;
+      background-color: #ecf0f1;
+      padding: 10px;
       border-radius: 8px;
     }
-    .stat {
-      flex: 1;
-      text-align: center;
+    .stats div {
       font-weight: bold;
+      color: #34495e;
     }
-    h2 {
-      background-color: #90caf9;
-      padding: 10px;
-      border-radius: 6px;
+    .section {
+      margin: 20px 0;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 40px;
+      margin-top: 10px;
+      background-color: #ffffff;
     }
     th, td {
       border: 1px solid #ccc;
       padding: 10px;
-      text-align: left;
+      text-align: center;
     }
     th {
-      background-color: #bbdefb;
+      background-color: #3498db;
+      color: white;
     }
-    td input {
-      width: 100%;
+    .left {
+      background-color: #dff0d8;
     }
-    .column-container {
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-    }
-    .column {
-      width: 48%;
+    .right {
+      background-color: #fcf8e3;
     }
   </style>
 </head>
 <body>
-  <header>Simulateur de Bac</header>
-  <div class="container">
-    <div class="selector">
-      <label for="voie">Choisissez votre voie :</label>
-      <select id="voie" onchange="changerVoie()">
-        <option value="generale">Générale</option>
-        <option value="technologique">Technologique</option>
-      </select>
-    </div>
-
-    <div class="stats">
-      <div class="stat" id="notesSaisies">Notes saisies : 0 / 25 (minimum 18)</div>
-      <div class="stat" id="moyenne">Moyenne : 0.00</div>
-      <div class="stat" id="mention">Mention : -</div>
-    </div>
-
-    <h2>Contrôle continu</h2>
-    <div class="column-container">
-      <div class="column">
-        <h3>Première</h3>
-        <div id="premiere-continu"></div>
-      </div>
-      <div class="column">
-        <h3>Terminale</h3>
-        <div id="terminale-continu"></div>
-      </div>
-    </div>
-
-    <h2>Épreuve Finale</h2>
-    <div class="column-container">
-      <div class="column">
-        <h3>Première</h3>
-        <div id="premiere-final"></div>
-      </div>
-      <div class="column">
-        <h3>Terminale</h3>
-        <div id="terminale-final"></div>
-      </div>
-    </div>
+  <h1>Simulateur Bac</h1>
+  <div class="header">
+    <label for="voie">Choisir votre voie :</label>
+    <select id="voie">
+      <option value="generale">Générale</option>
+      <option value="technologique">Technologique</option>
+    </select>
   </div>
 
+  <div class="stats">
+    <div>Notes saisies : <span id="notesCount">0</span> / 25 (minimum 18)</div>
+    <div>Moyenne : <span id="moyenne">-</span></div>
+    <div>Mention : <span id="mention">-</span></div>
+  </div>
+
+  <!-- CONTENU DYNAMIQUE ICI -->
+  <div id="contenu"></div>
+
   <script>
-    let notes = [];
+    const voieSelect = document.getElementById("voie");
+    const notesCount = document.getElementById("notesCount");
+    const moyenneDisplay = document.getElementById("moyenne");
+    const mentionDisplay = document.getElementById("mention");
+    const contenu = document.getElementById("contenu");
 
-    function createRow(matiere, coeff, id) {
-      return `<div><label>${matiere} (coef ${coeff})</label><input type="number" min="0" max="20" step="0.1" onchange="updateNote(this, ${coeff})" data-id="${id}"></div>`;
+    const matieres = {
+      generale: [
+        { nom: "Spécialité abandonnée", coeff: 8, saisie: true },
+        { nom: "Histoire Géographie", coeff: 3 },
+        { nom: "Langue vivante A", coeff: 3 },
+        { nom: "Langue vivante B", coeff: 3 },
+        { nom: "Enseignement Scientifique", coeff: 3 },
+        { nom: "Enseignement Moral et Civique", coeff: 1 },
+        { nom: "Option 1", coeff: 2 },
+        { nom: "LCA Latin", coeff: 2 },
+        { nom: "LCA Grec", coeff: 2 },
+      ],
+      generaleT: [
+        { nom: "Histoire Géographie", coeff: 3 },
+        { nom: "Langue vivante A", coeff: 3 },
+        { nom: "Langue vivante B", coeff: 3 },
+        { nom: "Enseignement Scientifique", coeff: 3 },
+        { nom: "Education Physique et Sportive", coeff: 6 },
+        { nom: "Enseignement Moral et Civique", coeff: 1 },
+        { nom: "Option 1", coeff: 2 },
+        { nom: "Option 2", coeff: 2 },
+        { nom: "LCA Latin", coeff: 2 },
+        { nom: "LCA Grec", coeff: 2 },
+      ]
+    };
+
+    voieSelect.addEventListener("change", () => {
+      // Supprime le contenu précédent et réinitialise les stats
+      contenu.innerHTML = "";
+      moyenneDisplay.textContent = "-";
+      mentionDisplay.textContent = "-";
+      notesCount.textContent = "0";
+      genererTableau(voieSelect.value);
+    });
+
+    function genererTableau(voie) {
+      const matieresPremiere = voie === "generale" ? matieres.generale : matieres.generale;
+      const matieresTerminale = voie === "generale" ? matieres.generaleT : matieres.generaleT;
+
+      const table = document.createElement("table");
+      const header = document.createElement("tr");
+      header.innerHTML = `
+        <th class="left">1ère</th>
+        <th>Note</th>
+        <th class="right">Terminale</th>
+        <th>Note</th>
+      `;
+      table.appendChild(header);
+
+      const maxLignes = Math.max(matieresPremiere.length, matieresTerminale.length);
+      for (let i = 0; i < maxLignes; i++) {
+        const row = document.createElement("tr");
+        const matiereP = matieresPremiere[i];
+        const matiereT = matieresTerminale[i];
+
+        row.innerHTML = `
+          <td class="left">${matiereP ? matiereP.nom : ""}</td>
+          <td>${matiereP ? `<input type="number" min="0" max="20" data-coeff="${matiereP.coeff}" />` : ""}</td>
+          <td class="right">${matiereT ? matiereT.nom : ""}</td>
+          <td>${matiereT ? `<input type="number" min="0" max="20" data-coeff="${matiereT.coeff}" />` : ""}</td>
+        `;
+
+        table.appendChild(row);
+      }
+
+      contenu.appendChild(table);
+      document.querySelectorAll("input[type=number]").forEach(input => {
+        input.addEventListener("input", calculer);
+      });
     }
 
-    function createSelectRow(label, options, coeff, id) {
-      let optionsHTML = options.map(o => `<option value="${o}">${o}</option>`).join('');
-      return `
-        <div>
-          <label>${label} (coef ${coeff})</label>
-          <select onchange="">${optionsHTML}</select>
-          <input type="number" min="0" max="20" step="0.1" onchange="updateNote(this, ${coeff})" data-id="${id}">
-        </div>`;
-    }
+    function calculer() {
+      let totalPoints = 0;
+      let totalCoeff = 0;
+      let notesRenseignees = 0;
 
-    function updateNote(input, coeff) {
-      const id = input.dataset.id;
-      const value = parseFloat(input.value);
-      const index = notes.findIndex(n => n.id === id);
-      if (!isNaN(value)) {
-        if (index >= 0) {
-          notes[index].val = value;
-        } else {
-          notes.push({ id, val: value, coeff });
+      document.querySelectorAll("input[type=number]").forEach(input => {
+        const valeur = parseFloat(input.value);
+        const coeff = parseFloat(input.dataset.coeff);
+        if (!isNaN(valeur)) {
+          totalPoints += valeur * coeff;
+          totalCoeff += coeff;
+          notesRenseignees++;
         }
+      });
+
+      const moyenne = totalPoints / totalCoeff;
+      moyenneDisplay.textContent = isNaN(moyenne) ? "-" : moyenne.toFixed(2);
+      notesCount.textContent = notesRenseignees;
+
+      let mention = "-";
+      if (moyenne >= 16) {
+        mention = "Très bien";
+      } else if (moyenne >= 14) {
+        mention = "Bien";
+      } else if (moyenne >= 12) {
+        mention = "Assez bien";
+      } else if (moyenne >= 10) {
+        mention = "Admis";
       } else {
-        if (index >= 0) notes.splice(index, 1);
+        mention = "Ajourné(e)";
       }
-      updateStats();
+
+      mentionDisplay.textContent = isNaN(moyenne) ? "-" : mention;
     }
 
-    function updateStats() {
-      const totalCoeff = notes.reduce((sum, n) => sum + n.coeff, 0);
-      const totalPoints = notes.reduce((sum, n) => sum + n.coeff * n.val, 0);
-      const moyenne = totalCoeff ? (totalPoints / totalCoeff) : 0;
-      const noteCount = notes.length;
-      document.getElementById('notesSaisies').innerText = `Notes saisies : ${noteCount} / 25 (minimum 18)`;
-      document.getElementById('moyenne').innerText = `Moyenne : ${moyenne.toFixed(2)}`;
-      let mention = '-';
-      if (moyenne >= 16) mention = 'Très Bien';
-      else if (moyenne >= 14) mention = 'Bien';
-      else if (moyenne >= 12) mention = 'Assez Bien';
-      else if (moyenne >= 10) mention = 'Passable';
-      document.getElementById('mention').innerText = `Mention : ${mention}`;
-    }
-
-    function changerVoie() {
-      notes = [];
-      updateStats();
-      const voie = document.getElementById('voie').value;
-      const generalSpec = ["ARTS", "BIO ECO", "HGGSP", "HLP", "LLCER", "LLCA", "Mathématiques", "NSI", "Physique-Chimie", "SES", "SI", "SVT"];
-      const technoSpec = ["Physique-Chimie pour la santé", "Sciences de gestion et numérique"];
-
-      const premiereContinu = document.getElementById('premiere-continu');
-      const terminaleContinu = document.getElementById('terminale-continu');
-      const premiereFinal = document.getElementById('premiere-final');
-      const terminaleFinal = document.getElementById('terminale-final');
-      premiereContinu.innerHTML = '';
-      terminaleContinu.innerHTML = '';
-      premiereFinal.innerHTML = '';
-      terminaleFinal.innerHTML = '';
-
-      if (voie === 'generale') {
-        premiereContinu.innerHTML += createSelectRow("Spécialité abandonnée", generalSpec, 8, "cont1");
-        premiereContinu.innerHTML += createRow("Histoire Géographie", 3, "cont2");
-        premiereContinu.innerHTML += createRow("Langue vivante A", 3, "cont3");
-        premiereContinu.innerHTML += createRow("Langue vivante B", 3, "cont4");
-        premiereContinu.innerHTML += createRow("Enseignement Scientifique", 3, "cont5");
-        premiereContinu.innerHTML += createRow("Enseignement Moral et Civique", 1, "cont6");
-        premiereContinu.innerHTML += createRow("Option 1 (Facultatif)", 2, "cont7");
-        premiereContinu.innerHTML += createRow("LCA Latin (Facultatif)", 2, "cont8");
-        premiereContinu.innerHTML += createRow("LCA Grec (Facultatif)", 2, "cont9");
-
-        terminaleContinu.innerHTML += createRow("Histoire Géographie", 3, "cont10");
-        terminaleContinu.innerHTML += createRow("Langue vivante A", 3, "cont11");
-        terminaleContinu.innerHTML += createRow("Langue vivante B", 3, "cont12");
-        terminaleContinu.innerHTML += createRow("Enseignement Scientifique", 3, "cont13");
-        terminaleContinu.innerHTML += createRow("Education Physique et Sportive", 6, "cont14");
-        terminaleContinu.innerHTML += createRow("Enseignement Moral et Civique", 1, "cont15");
-        terminaleContinu.innerHTML += createRow("Option 1 (Facultatif)", 2, "cont16");
-        terminaleContinu.innerHTML += createRow("Option 2 (Facultatif)", 2, "cont17");
-        terminaleContinu.innerHTML += createRow("LCA Latin (Facultatif)", 2, "cont18");
-        terminaleContinu.innerHTML += createRow("LCA Grec (Facultatif)", 2, "cont19");
-
-        premiereFinal.innerHTML += createRow("Français (écrit)", 5, "final1");
-        premiereFinal.innerHTML += createRow("Français (oral)", 5, "final2");
-        terminaleFinal.innerHTML += createSelectRow("Spécialité 1", generalSpec, 16, "final3");
-        terminaleFinal.innerHTML += createSelectRow("Spécialité 2", generalSpec, 16, "final4");
-        terminaleFinal.innerHTML += createRow("Philosophie", 8, "final5");
-        terminaleFinal.innerHTML += createRow("Grand Oral", 10, "final6");
-
-      } else {
-        premiereContinu.innerHTML += createSelectRow("Spécialité abandonnée", technoSpec, 8, "cont1");
-        premiereContinu.innerHTML += createRow("Physique-Chimie pour la santé", 3, "cont2");
-        premiereContinu.innerHTML += createRow("Histoire Géographie", 3, "cont3");
-        premiereContinu.innerHTML += createRow("Langue vivante A", 3, "cont4");
-        premiereContinu.innerHTML += createRow("Langue vivante B", 3, "cont5");
-        premiereContinu.innerHTML += createRow("Mathématiques", 3, "cont6");
-        premiereContinu.innerHTML += createRow("Enseignement Moral et Civique", 1, "cont7");
-        premiereContinu.innerHTML += createRow("Option 1 (Facultatif)", 2, "cont8");
-        premiereContinu.innerHTML += createRow("Option 2 (Facultatif)", 2, "cont9");
-
-        terminaleContinu.innerHTML += createRow("Histoire Géographie", 3, "cont10");
-        terminaleContinu.innerHTML += createRow("Langue vivante A", 3, "cont11");
-        terminaleContinu.innerHTML += createRow("Langue vivante B", 3, "cont12");
-        terminaleContinu.innerHTML += createRow("Mathématiques", 3, "cont13");
-        terminaleContinu.innerHTML += createRow("Education Physique et Sportive", 6, "cont14");
-        terminaleContinu.innerHTML += createRow("Enseignement Moral et Civique", 1, "cont15");
-        terminaleContinu.innerHTML += createRow("Option 1 (Facultatif)", 2, "cont16");
-        terminaleContinu.innerHTML += createRow("Option 2 (Facultatif)", 2, "cont17");
-
-        premiereFinal.innerHTML += createRow("Français (écrit)", 5, "final1");
-        premiereFinal.innerHTML += createRow("Français (oral)", 5, "final2");
-        terminaleFinal.innerHTML += createSelectRow("Spécialité 1", technoSpec, 16, "final3");
-        terminaleFinal.innerHTML += createRow("Philosophie", 8, "final4");
-        terminaleFinal.innerHTML += createRow("Grand Oral", 10, "final5");
-      }
-    }
-
-    changerVoie();
+    // Lancer au chargement initial
+    genererTableau("generale");
   </script>
 </body>
 </html>
